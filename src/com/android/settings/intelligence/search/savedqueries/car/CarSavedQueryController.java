@@ -21,17 +21,24 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 
+import androidx.annotation.NonNull;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 
+import com.android.car.ui.imewidescreen.CarUiImeSearchListItem;
+import com.android.car.ui.recyclerview.CarUiContentListItem;
+import com.android.car.ui.toolbar.ToolbarController;
+import com.android.settings.intelligence.R;
 import com.android.settings.intelligence.overlay.FeatureFactory;
 import com.android.settings.intelligence.search.SearchCommon;
 import com.android.settings.intelligence.search.SearchFeatureProvider;
 import com.android.settings.intelligence.search.SearchResult;
+import com.android.settings.intelligence.search.car.CarSearchFragment;
 import com.android.settings.intelligence.search.car.CarSearchResultsAdapter;
 import com.android.settings.intelligence.search.savedqueries.SavedQueryRecorder;
 import com.android.settings.intelligence.search.savedqueries.SavedQueryRemover;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,14 +56,19 @@ public class CarSavedQueryController implements LoaderManager.LoaderCallbacks,
     private final LoaderManager mLoaderManager;
     private final SearchFeatureProvider mSearchFeatureProvider;
     private final CarSearchResultsAdapter mResultAdapter;
+    private ToolbarController mToolbar;
+    private CarSearchFragment mFragment;
 
     public CarSavedQueryController(Context context, LoaderManager loaderManager,
-            CarSearchResultsAdapter resultsAdapter) {
+            CarSearchResultsAdapter resultsAdapter, @NonNull ToolbarController toolbar,
+            CarSearchFragment fragment) {
         mContext = context;
         mLoaderManager = loaderManager;
         mResultAdapter = resultsAdapter;
         mSearchFeatureProvider = FeatureFactory.get(context)
                 .searchFeatureProvider();
+        mToolbar = toolbar;
+        mFragment = fragment;
     }
 
     @Override
@@ -83,7 +95,23 @@ public class CarSavedQueryController implements LoaderManager.LoaderCallbacks,
                 if (SearchFeatureProvider.DEBUG) {
                     Log.d(TAG, "Saved queries loaded");
                 }
-                mResultAdapter.displaySavedQuery((List<SearchResult>) data);
+                List<SearchResult> results = (List<SearchResult>) data;
+                if (mToolbar.canShowSearchResultItems()) {
+                    List<CarUiImeSearchListItem> searchItems = new ArrayList<>();
+                    for (SearchResult result : results) {
+                        CarUiImeSearchListItem item = new CarUiImeSearchListItem(
+                                CarUiContentListItem.Action.ICON);
+                        item.setTitle(result.title);
+                        item.setIconResId(R.drawable.ic_restore);
+                        item.setOnItemClickedListener(
+                                v -> mFragment.onSavedQueryClicked(result.title));
+
+                        searchItems.add(item);
+                    }
+                    mToolbar.setSearchResultItems(searchItems);
+                }
+
+                mResultAdapter.displaySavedQuery(results);
                 break;
         }
     }

@@ -38,7 +38,7 @@ public class CarSavedQueryViewHolder extends CarSearchViewHolder {
         mIcon.setImageResource(R.drawable.ic_restore);
         mSummary.setVisibility(View.GONE);
         itemView.setOnClickListener(v -> {
-            fragment.onSavedQueryClicked(CarSavedQueryViewHolder.this, result.title);
+            fragment.onSavedQueryClicked(result.title);
         });
     }
 }

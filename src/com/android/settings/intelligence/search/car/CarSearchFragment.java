@@ -18,11 +18,19 @@ package com.android.settings.intelligence.search.car;
 
 import static com.android.car.ui.core.CarUi.requireInsets;
 import static com.android.car.ui.core.CarUi.requireToolbar;
+import static com.android.car.ui.utils.CarUiUtils.drawableToBitmap;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
@@ -31,12 +39,15 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.car.ui.imewidescreen.CarUiImeSearchListItem;
 import com.android.car.ui.preference.PreferenceFragment;
+import com.android.car.ui.recyclerview.CarUiContentListItem;
 import com.android.car.ui.toolbar.MenuItem;
 import com.android.car.ui.toolbar.Toolbar;
 import com.android.car.ui.toolbar.ToolbarController;
 import com.android.settings.intelligence.R;
 import com.android.settings.intelligence.overlay.FeatureFactory;
+import com.android.settings.intelligence.search.AppSearchResult;
 import com.android.settings.intelligence.search.SearchCommon;
 import com.android.settings.intelligence.search.SearchFeatureProvider;
 import com.android.settings.intelligence.search.SearchResult;
@@ -44,6 +55,7 @@ import com.android.settings.intelligence.search.indexing.IndexingCallback;
 import com.android.settings.intelligence.search.savedqueries.car.CarSavedQueryController;
 import com.android.settings.intelligence.search.savedqueries.car.CarSavedQueryViewHolder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -51,6 +63,8 @@ import java.util.List;
  */
 public class CarSearchFragment extends PreferenceFragment implements
         LoaderManager.LoaderCallbacks<List<? extends SearchResult>>, IndexingCallback {
+    private static final String TAG = "CarSearchFragment";
+    private static final int REQUEST_CODE_NO_OP = 0;
 
     private SearchFeatureProvider mSearchFeatureProvider;
 
@@ -106,15 +120,15 @@ public class CarSearchFragment extends PreferenceFragment implements
 
         LoaderManager loaderManager = getLoaderManager();
         mSearchAdapter = new CarSearchResultsAdapter(/* fragment= */ this);
+        mToolbar = getToolbar();
         mSavedQueryController = new CarSavedQueryController(
-                getContext(), loaderManager, mSearchAdapter);
+                getContext(), loaderManager, mSearchAdapter, mToolbar, this);
         mSearchFeatureProvider.updateIndexAsync(getContext(), /* indexingCallback= */ this);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mToolbar = getToolbar();
         if (mToolbar != null) {
             List<MenuItem> items = getToolbarMenuItems();
             mToolbar.setTitle(getPreferenceScreen().getTitle());
@@ -181,18 +195,10 @@ public class CarSearchFragment extends PreferenceFragment implements
     /**
      * Gets called when a saved query is clicked.
      */
-    public void onSavedQueryClicked(CarSavedQueryViewHolder vh, CharSequence query) {
+    public void onSavedQueryClicked(CharSequence query) {
         String queryString = query.toString();
         mToolbar.setSearchQuery(queryString);
         onQueryTextChange(queryString);
-    }
-
-    /**
-     * Gets called when a search result is clicked.
-     */
-    public void onSearchResultClicked(CarSearchViewHolder resultViewHolder, SearchResult result) {
-        mSearchFeatureProvider.searchResultClicked(getContext(), mQuery, result);
-        mSavedQueryController.saveQuery(mQuery);
     }
 
     @Override
@@ -208,8 +214,71 @@ public class CarSearchFragment extends PreferenceFragment implements
     @Override
     public void onLoadFinished(Loader<List<? extends SearchResult>> loader,
             List<? extends SearchResult> data) {
+
+        if (mToolbar.canShowSearchResultItems()) {
+            List<CarUiImeSearchListItem> searchItems = new ArrayList<>();
+            for (SearchResult result : data) {
+                CarUiImeSearchListItem item = new CarUiImeSearchListItem(
+                        CarUiContentListItem.Action.ICON);
+                item.setTitle(result.title);
+                if (result.breadcrumbs != null && !result.breadcrumbs.isEmpty()) {
+                    item.setBody(getBreadcrumb(result));
+                }
+
+                if (result instanceof AppSearchResult) {
+                    AppSearchResult appResult = (AppSearchResult) result;
+                    PackageManager pm = getActivity().getPackageManager();
+                    Drawable drawable = appResult.info.loadIcon(pm);
+                    Bitmap bm = drawableToBitmap(drawable);
+                    BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), bm);
+                    item.setIcon(bitmapDrawable);
+                } else if (result.icon != null) {
+                    Bitmap bm = drawableToBitmap(result.icon);
+                    BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), bm);
+                    item.setIcon(bitmapDrawable);
+                }
+                item.setOnItemClickedListener(v -> onSearchResultClicked(result));
+
+                searchItems.add(item);
+            }
+            mToolbar.setSearchResultItems(searchItems);
+        }
+
         mSearchAdapter.postSearchResults(data);
         mRecyclerView.scrollToPosition(0);
+    }
+
+    private String getBreadcrumb(SearchResult result) {
+        String breadcrumb = result.breadcrumbs.get(0);
+        int count = result.breadcrumbs.size();
+        for (int i = 1; i < count; i++) {
+            breadcrumb = getContext().getString(R.string.search_breadcrumb_connector,
+                    breadcrumb, result.breadcrumbs.get(i));
+        }
+
+        return breadcrumb;
+    }
+
+    /**
+     * Gets called when a search result is clicked.
+     */
+    protected void onSearchResultClicked(SearchResult result) {
+        mSearchFeatureProvider.searchResultClicked(getContext(), mQuery, result);
+        mSavedQueryController.saveQuery(mQuery);
+
+        Intent intent = result.payload.getIntent();
+        if (result instanceof AppSearchResult) {
+            getActivity().startActivity(intent);
+        } else {
+            PackageManager pm = getActivity().getPackageManager();
+            List<ResolveInfo> info = pm.queryIntentActivities(intent, /* flags= */ 0);
+            if (info != null && !info.isEmpty()) {
+                startActivityForResult(intent, REQUEST_CODE_NO_OP);
+            } else {
+                Log.e(TAG, "Cannot launch search result, title: "
+                        + result.title + ", " + intent);
+            }
+        }
     }
 
     @Override

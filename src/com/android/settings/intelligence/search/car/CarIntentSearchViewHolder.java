@@ -16,25 +16,18 @@
 
 package com.android.settings.intelligence.search.car;
 
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 
 import com.android.settings.intelligence.R;
 import com.android.settings.intelligence.search.AppSearchResult;
 import com.android.settings.intelligence.search.SearchResult;
 
-import java.util.List;
-
 /**
  * ViewHolder for intent based search results.
  */
 public class CarIntentSearchViewHolder extends CarSearchViewHolder {
-    private static final String TAG = "CarIntentSearchViewHolder";
-    private static final int REQUEST_CODE_NO_OP = 0;
 
     public CarIntentSearchViewHolder(View view) {
         super(view);
@@ -52,23 +45,7 @@ public class CarIntentSearchViewHolder extends CarSearchViewHolder {
         }
         bindBreadcrumbView(result);
 
-        itemView.setOnClickListener(v -> {
-            fragment.onSearchResultClicked(/* resultViewHolder= */ this, result);
-            Intent intent = result.payload.getIntent();
-            if (result instanceof AppSearchResult) {
-                AppSearchResult appResult = (AppSearchResult) result;
-                fragment.getActivity().startActivity(intent);
-            } else {
-                PackageManager pm = fragment.getActivity().getPackageManager();
-                List<ResolveInfo> info = pm.queryIntentActivities(intent, /* flags= */ 0);
-                if (info != null && !info.isEmpty()) {
-                    fragment.startActivityForResult(intent, REQUEST_CODE_NO_OP);
-                } else {
-                    Log.e(TAG, "Cannot launch search result, title: "
-                            + result.title + ", " + intent);
-                }
-            }
-        });
+        itemView.setOnClickListener(v -> fragment.onSearchResultClicked(result));
     }
 
     private void bindBreadcrumbView(SearchResult result) {
