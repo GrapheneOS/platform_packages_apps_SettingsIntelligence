@@ -20,7 +20,7 @@
     <string name="applications_settings" msgid="3446736638853404682">"ຂໍ້ມູນແອັບ"</string>
     <string name="accessibility_settings_classname" msgid="973410590374198997">"com.android.settings.accessibility.AccessibilitySettings"</string>
     <string name="accessibility_settings" msgid="1488998032020612740">"ການຊ່ວຍເຂົ້າເຖິງ"</string>
-    <string name="physical_keyboard_title" msgid="3955072245281785000">"ແປ້ນພິມແທ້"</string>
+    <string name="physical_keyboard_title" msgid="3955072245281785000">"ແປ້ນພິມພາຍນອກ"</string>
     <string name="add_virtual_keyboard" msgid="542703692821933851">"ຈັດການແປ້ນພິມ"</string>
     <string name="app_name_settings_intelligence" msgid="8701735500346011661">"ການແນະນຳການຕັ້ງຄ່າ"</string>
     <string name="search_clear_history" msgid="6232116698940067519">"ລຶບລ້າງປະຫວັດ"</string>
