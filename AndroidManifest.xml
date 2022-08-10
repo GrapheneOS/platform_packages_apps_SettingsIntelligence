@@ -28,6 +28,15 @@
 
     <uses-sdk android:targetSdkVersion="31" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN"/>
+        </intent>
+        <intent>
+            <action android:name="android.content.action.SEARCH_INDEXABLES_PROVIDER" />
+        </intent>
+    </queries>
+
     <application
         android:label="@string/app_name_settings_intelligence"
         android:icon="@mipmap/ic_launcher"
