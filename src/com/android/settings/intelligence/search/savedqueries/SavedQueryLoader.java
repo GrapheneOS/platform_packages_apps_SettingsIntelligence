@@ -19,6 +19,8 @@ package com.android.settings.intelligence.search.savedqueries;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
+
 import androidx.annotation.VisibleForTesting;
 
 import com.android.settings.intelligence.search.SearchResult;
@@ -70,6 +72,9 @@ public class SavedQueryLoader extends AsyncLoader<List<? extends SearchResult>> 
         while (cursor.moveToNext()) {
             final SavedQueryPayload payload = new SavedQueryPayload(
                     cursor.getString(cursor.getColumnIndex(SavedQueriesColumns.QUERY)));
+            if (TextUtils.isEmpty(payload.query)) {
+                continue;
+            }
             results.add(new SearchResult.Builder()
                     .setDataKey(payload.query)
                     .setTitle(payload.query)
