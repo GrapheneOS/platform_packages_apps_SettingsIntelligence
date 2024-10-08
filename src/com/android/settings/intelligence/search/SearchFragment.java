@@ -293,10 +293,14 @@ public class SearchFragment extends Fragment implements SearchView.OnQueryTextLi
     }
 
     public void onSearchResultClicked(SearchViewHolder resultViewHolder, SearchResult result) {
+        String query = mQuery;
+        if (TextUtils.isEmpty(query)) {
+            return;
+        }
         hideKeyboard();
         logSearchResultClicked(resultViewHolder, result);
-        mSearchFeatureProvider.searchResultClicked(getContext(), mQuery, result);
-        mSavedQueryController.saveQuery(mQuery);
+        mSearchFeatureProvider.searchResultClicked(getContext(), query, result);
+        mSavedQueryController.saveQuery(query);
     }
 
     public void onSearchResultsDisplayed(int resultCount) {
