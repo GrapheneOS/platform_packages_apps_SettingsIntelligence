@@ -105,6 +105,10 @@ public class SavedQueryController implements LoaderManager.LoaderCallbacks,
     }
 
     public void saveQuery(String query) {
+        if (android.text.TextUtils.isEmpty(query)) {
+            Log.w(TAG, "saveQuery() called with an empty query, ignoring", new Throwable());
+            return;
+        }
         final Bundle args = new Bundle();
         args.putString(ARG_QUERY, query);
         mLoaderManager.restartLoader(SearchCommon.SearchLoaderId.SAVE_QUERY_TASK, args,
