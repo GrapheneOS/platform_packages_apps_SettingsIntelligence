@@ -62,15 +62,7 @@ public abstract class SearchViewHolder extends RecyclerView.ViewHolder {
 
     public void onBind(SearchFragment fragment, SearchResult result) {
         titleView.setText(result.title);
-        // TODO (b/36101902) remove check for DYNAMIC_PLACEHOLDER
-        if (TextUtils.isEmpty(result.summary)
-                || TextUtils.equals(result.summary, mPlaceholderSummary)
-                || TextUtils.equals(result.summary, DYNAMIC_PLACEHOLDER)) {
-            summaryView.setVisibility(View.GONE);
-        } else {
-            summaryView.setText(result.summary);
-            summaryView.setVisibility(View.VISIBLE);
-        }
+        summaryView.setVisibility(View.GONE);
 
         if (result instanceof AppSearchResult) {
             AppSearchResult appResult = (AppSearchResult) result;
