@@ -15,9 +15,6 @@
   limitations under the License.
   -->
 
-<resources
-    xmlns:androidprv="http://schemas.android.com/apk/prv/res/android">
-
-    <color name="search_bar_background">?androidprv:attr/colorSurfaceVariant</color>
-
+<resources>
+    <color name="search_bar_background">@color/materialColorSurfaceContainerHigh</color>
 </resources>

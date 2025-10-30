@@ -34,6 +34,7 @@ android_library {
         "androidx.recyclerview_recyclerview",
         "androidx.legacy_legacy-preference-v14",
         "SettingsLibActivityEmbedding",
+        "dynamiccolors",
     ],
     proto: {
         type: "nano",
